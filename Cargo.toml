@@ -1,0 +1,4 @@
+[package]
+name = "rust_redis"
+version = "0.1.0"
+authors = ["George Lewis <ghl227@gmail.com>"]
