@@ -6,3 +6,4 @@ authors = ["George Lewis <ghl227@gmail.com>"]
 [dependencies]
 docopt = "0.6"
 rustc-serialize = "0.3"  # if you're using `derive(RustcDecodable)`
+tiny_http = "0.5"
