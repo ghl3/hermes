@@ -12,6 +12,7 @@ use std::net::SocketAddr;
 use std::io::Read;
 use std::str::FromStr;
 
+
 const USAGE: &'static str = "
 Naval Fate.
 
@@ -26,6 +27,7 @@ Options:
   --port=<p>    Port to listen on [default: 5001]
 ";
 
+
 #[derive(Debug, RustcDecodable)]
 struct Args {
     flag_port: i32
@@ -33,8 +35,8 @@ struct Args {
 
 fn handle_client(mut stream: TcpStream) {
     let mut buffer = Vec::<u8>::new();
-    let data = stream.read_to_end(&mut buffer).unwrap();
-    println!("{}", data);
+    let _ = stream.read_to_end(&mut buffer).unwrap();
+    println!("{}", String::from_utf8(buffer).unwrap());
 }
 
 fn main() {
@@ -55,7 +57,9 @@ fn main() {
                     handle_client(stream)
                 });
             }
-            Err(e) => { println!("ERROR: {:}", e); }
+            Err(e) => {
+                println!("ERROR: {:}", e);
+            }
         }
     }
 }
