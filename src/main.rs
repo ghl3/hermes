@@ -15,10 +15,9 @@ use std::io::Cursor;
 
 use std::str::FromStr;
 
+use rustc_serialize::json::Json;
 
 use tiny_http::{Server, Request, Response, StatusCode, Method, Header};
-
-
 
 const USAGE: &'static str = "
 Naval Fate.
@@ -40,6 +39,7 @@ struct Args {
     flag_port: i32
 }
 
+
 fn handle_client(mut stream: TcpStream) {
     let mut buffer = Vec::<u8>::new();
     let _ = stream.read_to_end(&mut buffer).unwrap();
@@ -47,27 +47,51 @@ fn handle_client(mut stream: TcpStream) {
 }
 
 
+enum ParsedRequest {
+    Unknown,
+    GetRequest(String),
+    PostJson(Json),
+    PutJson(Json),
+    DeleteRequest(String)
+}
+
+
+fn parse_request(request: &mut Request) -> ParsedRequest {
+    let response = match request.method() {
+        &Method::Get => ParsedRequest::GetRequest(request.url().to_string()),
+        &Method::Post => ParsedRequest::PostJson(get_json(request)),
+        &Method::Put => ParsedRequest::PutJson(get_json(request)),
+        &Method::Delete => ParsedRequest::DeleteRequest(request.url().to_string()),
+        _ => ParsedRequest::Unknown
+    };
+    response
+}
+
+
 fn handle_request(mut request: Request) {
-    //println!("Headers: {}", request.headers());
+
     let mut content = String::new();
     request.as_reader().read_to_string(&mut content).unwrap();
     println!("Body: {}", content);
 
-    let response = match request.method() {
-        &Method::Get => handle_get(&request),
-        &Method::Post => handle_post(&request),
-        &Method::Put => handle_put(&request),
-        &Method::Delete => handle_delete(&request),
-        _ => handle_nonstandard_request(&request)
+    let response = match parse_request(&mut request) {
+        ParsedRequest::GetRequest(url) => handle_get(url), //http_response(StatusCode(500), "Unsupported"),
+        ParsedRequest::PostJson(json) => handle_post(json),
+        ParsedRequest::PutJson(json) => handle_put(json),
+        ParsedRequest::DeleteRequest(url) => handle_delete(url),
+        ParsedRequest::Unknown => http_response(StatusCode(400), "Send me JSON, fuck face")
     };
-
     request.respond(response);
 }
 
-
-//static headers: Vec<tiny_http::Header> = Vec::new();
-//static header: Header = tiny_http::Header::from_bytes(&b"Content-Type", &b"text/plain").unwrap();
-
+fn get_json(request: &mut Request) -> Json {
+    println!("Getting Json");
+    let mut content = String::new();
+    request.as_reader().read_to_string(&mut content).unwrap();
+    let json: Json = content.parse().unwrap();
+    println!("GOT Json");
+    json
+}
 
 
 fn http_response<S>(status: StatusCode, data: S) -> Response<Cursor<Vec<u8>>> where S: Into<String> {
@@ -86,24 +110,23 @@ fn http_response<S>(status: StatusCode, data: S) -> Response<Cursor<Vec<u8>>> wh
             )
 }
 
-fn handle_get(request: &Request) -> Response<Cursor<Vec<u8>>> {
+fn handle_get(url: String) -> Response<Cursor<Vec<u8>>> {
     println!("GET");
     http_response(StatusCode(200), "COOL")
-    //Response::new(StatusCode(200), headers, "COOL", Option::None, Option::None)
 }
-fn handle_post(request: &Request) -> Response<Cursor<Vec<u8>>> {
+fn handle_post(request: Json) -> Response<Cursor<Vec<u8>>> {
     println!("POST");
     http_response(StatusCode(200), "COOL")
 }
-fn handle_put(request: &Request) -> Response<Cursor<Vec<u8>>> {
+fn handle_put(request: Json) -> Response<Cursor<Vec<u8>>> {
     println!("PUT");
     http_response(StatusCode(200), "COOL")
 }
-fn handle_delete(request: &Request) -> Response<Cursor<Vec<u8>>> {
+fn handle_delete(url: String) -> Response<Cursor<Vec<u8>>> {
     println!("DELETE");
     http_response(StatusCode(200), "COOL")
 }
-fn handle_nonstandard_request(request: &Request) -> Response<Cursor<Vec<u8>>> {
+fn handle_nonstandard_request(request: Json) -> Response<Cursor<Vec<u8>>> {
     println!("WTF!!!");
     http_response(StatusCode(200), "COOL")
 }
@@ -132,21 +155,4 @@ fn main() {
         // do something with the request
         // ...
         }
-
-/*
-    let listener = TcpListener::bind(addr).unwrap();
-
-    for stream in listener.incoming() {
-        match stream {
-            Ok(stream) => {
-                thread::spawn(move|| {
-                    handle_client(stream)
-                });
-            }
-            Err(e) => {
-                println!("ERROR: {:}", e);
-            }
-        }
-    }
-*/
 }
