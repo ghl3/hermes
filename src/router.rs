@@ -20,7 +20,7 @@ use rustc_serialize::json;
 use rustc_serialize::json::Json;
 
 
-enum ParsedRequest {
+pub enum ParsedRequest {
 
     // The Good
     GetRequest(Url),
@@ -41,7 +41,7 @@ enum ParsedRequest {
 }
 
 /// Constructs a new `ParsedRequest` object for the incoming request.
-fn parse_request(request: &mut Request) -> ParsedRequest {
+pub fn parse_request(request: &mut Request) -> ParsedRequest {
     let response = match request.method() {
         &Method::Get => handle_get(request),
         &Method::Post => handle_post(request),
@@ -87,7 +87,7 @@ fn handle_put(request: &mut Request) -> ParsedRequest {
 }
 
 #[derive(Debug)]
-enum RequestParseError {
+pub enum RequestParseError {
     ReadError(io::Error),
     UrlParseError(url::ParseError),
     JsonParseError(json::ParserError)
