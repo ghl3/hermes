@@ -2,25 +2,23 @@
 extern crate rustc_serialize;
 extern crate docopt;
 extern crate tiny_http;
-
-use docopt::Docopt;
+extern crate url;
 
 use std::thread;
-
 use std::net::{TcpListener, TcpStream};
 use std::net::SocketAddr;
-
 use std::io::Read;
 use std::io::Cursor;
-
 use std::str::FromStr;
 
 use rustc_serialize::json::Json;
 
 use tiny_http::{Server, Request, Response, StatusCode, Method, Header};
 
+use docopt::Docopt;
 
 mod router;
+//mod handler;
 
 
 const USAGE: &'static str = "
@@ -70,6 +68,8 @@ fn parse_request(request: &mut Request) -> ParsedRequest {
     };
     response
 }
+
+
 
 
 fn handle_request(mut request: Request) {
