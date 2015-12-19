@@ -11,7 +11,7 @@ use std::fmt::Display;
 use std::io::Read;
 use std::io;
 
-use tiny_http::{Server, Request, Response, StatusCode, Method, Header};
+use tiny_http::{Request, Method};
 
 use url;
 use url::Url;

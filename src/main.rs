@@ -4,16 +4,11 @@ extern crate docopt;
 extern crate tiny_http;
 extern crate url;
 
-use std::thread;
-use std::net::{TcpListener, TcpStream};
+use std::io;
 use std::net::SocketAddr;
-use std::io::Read;
-use std::io::Cursor;
 use std::str::FromStr;
 
-use rustc_serialize::json::Json;
-
-use tiny_http::{Server, Request, Response, StatusCode, Method, Header};
+use tiny_http::{Server, Request};
 
 use docopt::Docopt;
 
@@ -41,10 +36,10 @@ struct Args {
 }
 
 
-pub fn parse_and_handle_request(mut request: Request) -> () {
+pub fn parse_and_handle_request(mut request: Request) -> Result<(), io::Error> {
     let parsed = router::parse_request(&mut request);
     let response = handler::handle_request(parsed);
-    request.respond(response);
+    request.respond(response)
 }
 
 
@@ -62,8 +57,13 @@ fn main() {
 
     loop {
         // blocks until the next request is received
-        let request = match server.recv() {
-            Ok(rq) => parse_and_handle_request(rq),
+        match server.recv() {
+            Ok(rq) => {
+                match parse_and_handle_request(rq) {
+                    Ok(_) => (),
+                    Err(err) => println!("Error sending response: {}", err)
+                }
+            },
             Err(e) => { println!("error: {}", e); break }
         };
     }

@@ -3,7 +3,7 @@
 use router::ParsedRequest;
 
 use std::io::Cursor;
-use tiny_http::{Server, Request, Response, StatusCode, Method, Header};
+use tiny_http::{Response, StatusCode, Header};
 
 use url::Url;
 
@@ -22,10 +22,10 @@ pub fn handle_request(request: ParsedRequest) -> Response<Cursor<Vec<u8>>> {
 
         // TODO:  The response MUST include an Allow header containing a list of valid methods for the requested resource.
         ParsedRequest::UnsupportedMethod => http_response(StatusCode(405), "Method not allowed"),
-        ParsedRequest::UnknownUrl(url) => http_response(StatusCode(404), "Url does not exist"),
+        ParsedRequest::UnknownUrl(url) => http_response(StatusCode(404), format!("Url does not exist: {}", url)),
 
-        ParsedRequest::JsonParseError(err) => http_response(StatusCode(400), "Bad Json"),
-        ParsedRequest::UrlParseError(err) => http_response(StatusCode(400), "Bad Url"),
+        ParsedRequest::JsonParseError(err) => http_response(StatusCode(400), format!("Bad Json: {}", err)),
+        ParsedRequest::UrlParseError(err) => http_response(StatusCode(400), format!("Bad Url: {}", err)),
     }
 }
 
