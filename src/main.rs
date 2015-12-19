@@ -18,7 +18,7 @@ use tiny_http::{Server, Request, Response, StatusCode, Method, Header};
 use docopt::Docopt;
 
 mod router;
-//mod handler;
+mod handler;
 
 
 const USAGE: &'static str = "

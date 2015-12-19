@@ -21,14 +21,23 @@ use rustc_serialize::json::Json;
 
 
 enum ParsedRequest {
+
+    // The Good
     GetRequest(Url),
     DeleteRequest(Url),
     PostJson(Url, Json),
     PutJson(Url, Json),
 
+    // The Bad
     UnsupportedMethod,
-    BadBody(RequestParseError),
-    BadUrl(RequestParseError)
+    UnknownUrl(Url),
+
+    // The Ugly
+    JsonParseError(RequestParseError),
+    UrlParseError(RequestParseError),
+
+    //BadBody(RequestParseError),
+    //BadUrl(RequestParseError)
 }
 
 /// Constructs a new `ParsedRequest` object for the incoming request.
@@ -43,48 +52,39 @@ fn parse_request(request: &mut Request) -> ParsedRequest {
     response
 }
 
-
 fn handle_get(request: &Request) -> ParsedRequest {
     match get_url(request) {
         Ok(url) => ParsedRequest::GetRequest(url),
-        Err(e) => ParsedRequest::BadUrl(e),
+        Err(e) => ParsedRequest::UrlParseError(e),
     }
 }
 
 fn handle_delete(request: &Request) -> ParsedRequest {
     match get_url(request) {
         Ok(url) => ParsedRequest::DeleteRequest(url),
-        Err(e) => ParsedRequest::BadUrl(e),
+        Err(e) => ParsedRequest::UrlParseError(e),
     }
-    //ParsedRequest::DeleteRequest(request.url().to_string())
 }
 
 fn handle_post(request: &mut Request) -> ParsedRequest {
     match get_url(request) {
         Ok(url) => match get_body_as_json(request) {
             Ok(json) => ParsedRequest::PostJson(url, json),
-            Err(e) => ParsedRequest::BadBody(e),
+            Err(e) => ParsedRequest::JsonParseError(e),
         },
-        Err(e) => ParsedRequest::BadUrl(e)
+        Err(e) => ParsedRequest::UrlParseError(e)
     }
 }
+
 fn handle_put(request: &mut Request) -> ParsedRequest {
     match get_url(request) {
         Ok(url) => match get_body_as_json(request) {
             Ok(json) => ParsedRequest::PutJson(url, json),
-            Err(e) => ParsedRequest::BadBody(e),
+            Err(e) => ParsedRequest::JsonParseError(e),
         },
-        Err(e) => ParsedRequest::BadUrl(e)
+        Err(e) => ParsedRequest::UrlParseError(e)
     }
 }
-/*
-fn handle_put(request: &mut Request) -> ParsedRequest {
-    match get_body_as_json(request) {
-        Ok(json) => ParsedRequest::PutJson(request.url().to_string(), json),
-        Err(e) => ParsedRequest::BadBody(e)
-    }
-}
- */
 
 #[derive(Debug)]
 enum RequestParseError {
@@ -134,7 +134,6 @@ fn get_body_as_json(request: &mut Request) -> Result<Json, RequestParseError> {
     Ok(json)
 }
 
-
 fn get_url(request: &Request) -> Result<Url, RequestParseError> {
-    Ok(try!(Url::parse(request.url()))) //.to_string()))
+    Ok(try!(Url::parse(request.url())))
 }
