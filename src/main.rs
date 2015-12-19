@@ -19,6 +19,10 @@ use rustc_serialize::json::Json;
 
 use tiny_http::{Server, Request, Response, StatusCode, Method, Header};
 
+
+mod router;
+
+
 const USAGE: &'static str = "
 Naval Fate.
 
