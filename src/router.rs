@@ -19,8 +19,6 @@ use url::Url;
 use rustc_serialize::json;
 use rustc_serialize::json::Json;
 
-use handler;
-
 pub enum ParsedRequest {
 
     // The Good
@@ -36,27 +34,11 @@ pub enum ParsedRequest {
     // The Ugly
     JsonParseError(RequestParseError),
     UrlParseError(RequestParseError),
-
-    //BadBody(RequestParseError),
-    //BadUrl(RequestParseError)
 }
+
 
 /// Constructs a new `ParsedRequest` object for the incoming request.
-pub fn parse_and_handle_request(mut request: Request) -> () {
-    let parsed = parse_request(&mut request); /*match request.method() {
-        &Method::Get => handle_get(&request),
-        &Method::Post => handle_post(&mut request),
-        &Method::Put => handle_put(&mut request),
-        &Method::Delete => handle_delete(&request),
-        _ => ParsedRequest::UnsupportedMethod
-    };
-*/
-    let response = handler::handle_request(parsed);
-    request.respond(response);
-}
-
-
-fn parse_request(mut request: &mut Request) -> ParsedRequest {
+pub fn parse_request(mut request: &mut Request) -> ParsedRequest {
     match request.method() {
         &Method::Get => handle_get(&request),
         &Method::Post => handle_post(&mut request),
@@ -66,6 +48,7 @@ fn parse_request(mut request: &mut Request) -> ParsedRequest {
     }
 }
 
+
 fn handle_get(request: &Request) -> ParsedRequest {
     match get_url(request) {
         Ok(url) => ParsedRequest::GetRequest(url),
@@ -73,12 +56,14 @@ fn handle_get(request: &Request) -> ParsedRequest {
     }
 }
 
+
 fn handle_delete(request: &Request) -> ParsedRequest {
     match get_url(request) {
         Ok(url) => ParsedRequest::DeleteRequest(url),
         Err(e) => ParsedRequest::UrlParseError(e),
     }
 }
+
 
 fn handle_post(request: &mut Request) -> ParsedRequest {
     match get_url(request) {
@@ -90,6 +75,7 @@ fn handle_post(request: &mut Request) -> ParsedRequest {
     }
 }
 
+
 fn handle_put(request: &mut Request) -> ParsedRequest {
     match get_url(request) {
         Ok(url) => match get_body_as_json(request) {
@@ -99,6 +85,7 @@ fn handle_put(request: &mut Request) -> ParsedRequest {
         Err(e) => ParsedRequest::UrlParseError(e)
     }
 }
+
 
 #[derive(Debug)]
 pub enum RequestParseError {
@@ -140,6 +127,7 @@ impl From<url::ParseError> for RequestParseError {
     }
 }
 
+
 /// Attempts to construct a Constructs a new `Rc<T>`.
 fn get_body_as_json(request: &mut Request) -> Result<Json, RequestParseError> {
     let mut content = String::new();
@@ -147,6 +135,7 @@ fn get_body_as_json(request: &mut Request) -> Result<Json, RequestParseError> {
     let json: Json = try!(Json::from_str(&content));
     Ok(json)
 }
+
 
 fn get_url(request: &Request) -> Result<Url, RequestParseError> {
     Ok(try!(Url::parse(request.url())))

@@ -35,31 +35,33 @@ fn get_handler(url: Url) -> Response<Cursor<Vec<u8>>> {
     println!("{}", message);
     ok(message)
 }
+
+
 fn delete_handler(url: Url) -> Response<Cursor<Vec<u8>>> {
     let message = format!("DELETE Url: {}", url);
     println!("{}", message);
     ok(message)
 }
+
+
 fn post_handler(url: Url, json: Json) -> Response<Cursor<Vec<u8>>> {
     let message = format!("POST Url: {} Json: {}", url, json);
     println!("{}", message);
     ok(message)
 }
+
+
 fn put_handler(url: Url, json: Json) -> Response<Cursor<Vec<u8>>> {
     let message = format!("PUT Url: {} Json: {}", url, json);
     println!("{}", message);
     ok(message)
 }
 
-/*
-fn json_response(json: Json) -> Response<Cursor<Vec<u8>>> {
-    ok(json)
-}
-*/
 
 fn ok<S>(data: S) -> Response<Cursor<Vec<u8>>> where S: Into<String> {
     http_response(StatusCode(200), data)
 }
+
 
 fn http_response<S>(status: StatusCode, data: S) -> Response<Cursor<Vec<u8>>> where S: Into<String> {
 
@@ -76,8 +78,3 @@ fn http_response<S>(status: StatusCode, data: S) -> Response<Cursor<Vec<u8>>> wh
         None,
         )
 }
-
-
-
-
-
