@@ -3,6 +3,7 @@ extern crate rustc_serialize;
 extern crate docopt;
 extern crate tiny_http;
 extern crate url;
+//extern crate collections;
 
 use std::io;
 use std::net::SocketAddr;
@@ -14,6 +15,7 @@ use docopt::Docopt;
 
 mod router;
 mod handler;
+mod url_parser;
 
 const USAGE: &'static str = "
 Naval Fate.
