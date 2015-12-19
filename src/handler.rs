@@ -13,7 +13,7 @@ use rustc_serialize::json::Json;
 // action on it.
 // It returns a response that is sent back to the user
 
-fn handle_request(request: ParsedRequest) -> Response<Cursor<Vec<u8>>> {
+pub fn handle_request(request: ParsedRequest) -> Response<Cursor<Vec<u8>>> {
     match request {
         ParsedRequest::GetRequest(url) => get_handler(url),
         ParsedRequest::DeleteRequest(url) => delete_handler(url),

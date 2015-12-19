@@ -19,6 +19,7 @@ use docopt::Docopt;
 
 mod router;
 mod handler;
+//mod cli_parser;
 
 
 const USAGE: &'static str = "
@@ -42,6 +43,7 @@ struct Args {
 }
 
 
+/*
 fn handle_client(mut stream: TcpStream) {
     let mut buffer = Vec::<u8>::new();
     let _ = stream.read_to_end(&mut buffer).unwrap();
@@ -134,7 +136,7 @@ fn handle_nonstandard_request(request: Json) -> Response<Cursor<Vec<u8>>> {
     println!("WTF!!!");
     http_response(StatusCode(200), "COOL")
 }
-
+*/
 
 fn main() {
 
@@ -152,7 +154,11 @@ fn main() {
     loop {
         // blocks until the next request is received
         let request = match server.recv() {
-            Ok(rq) => handle_request(rq),
+            Ok(rq) => {
+                router::parse_and_handle_request(rq);
+                //let response = handler::handle_request(router::parse_request(rq));
+                //rq.respond(response);
+            },
             Err(e) => { println!("error: {}", e); break }
         };
 

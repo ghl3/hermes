@@ -19,6 +19,7 @@ use url::Url;
 use rustc_serialize::json;
 use rustc_serialize::json::Json;
 
+use handler;
 
 pub enum ParsedRequest {
 
@@ -41,15 +42,28 @@ pub enum ParsedRequest {
 }
 
 /// Constructs a new `ParsedRequest` object for the incoming request.
-pub fn parse_request(request: &mut Request) -> ParsedRequest {
-    let response = match request.method() {
-        &Method::Get => handle_get(request),
-        &Method::Post => handle_post(request),
-        &Method::Put => handle_put(request),
-        &Method::Delete => handle_delete(request),
+pub fn parse_and_handle_request(mut request: Request) -> () {
+    let parsed = parse_request(&mut request); /*match request.method() {
+        &Method::Get => handle_get(&request),
+        &Method::Post => handle_post(&mut request),
+        &Method::Put => handle_put(&mut request),
+        &Method::Delete => handle_delete(&request),
         _ => ParsedRequest::UnsupportedMethod
     };
-    response
+*/
+    let response = handler::handle_request(parsed);
+    request.respond(response);
+}
+
+
+fn parse_request(mut request: &mut Request) -> ParsedRequest {
+    match request.method() {
+        &Method::Get => handle_get(&request),
+        &Method::Post => handle_post(&mut request),
+        &Method::Put => handle_put(&mut request),
+        &Method::Delete => handle_delete(&request),
+        _ => ParsedRequest::UnsupportedMethod,
+    }
 }
 
 fn handle_get(request: &Request) -> ParsedRequest {
