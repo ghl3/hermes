@@ -28,6 +28,7 @@ mod router;
 mod url_parser;
 mod http;
 mod api;
+mod table;
 
 const USAGE: &'static str = "
 Naval Fate.
@@ -62,6 +63,8 @@ fn main() {
 
     let server = Server::http(addr).unwrap();
 
+    let tables = table::Tables::new();
+    
     loop {
         // blocks until the next request is received
         match server.recv() {
