@@ -13,23 +13,27 @@ use std::io;
 
 use tiny_http::{Request, Method};
 
-use url;
-use url::Url;
+//use url;
+//use url::Url;
 
 use rustc_serialize::json;
 use rustc_serialize::json::Json;
 
+use url_parser;
+use url_parser::UrlResource;
+
+
 pub enum ParsedRequest {
 
     // The Good
-    GetRequest(Url),
-    DeleteRequest(Url),
-    PostJson(Url, Json),
-    PutJson(Url, Json),
+    GetRequest(UrlResource),
+    DeleteRequest(UrlResource),
+    PostJson(UrlResource, Json),
+    PutJson(UrlResource, Json),
 
     // The Bad
     UnsupportedMethod,
-    UnknownUrl(Url),
+    UnknownUrl(UrlResource),
 
     // The Ugly
     JsonParseError(RequestParseError),
@@ -90,7 +94,7 @@ fn handle_put(request: &mut Request) -> ParsedRequest {
 #[derive(Debug)]
 pub enum RequestParseError {
     ReadError(io::Error),
-    UrlParseError(url::ParseError),
+    UrlParseError(url_parser::UrlParseError),
     JsonParseError(json::ParserError)
 }
 impl fmt::Display for RequestParseError {
@@ -121,8 +125,8 @@ impl From<json::ParserError> for RequestParseError {
         RequestParseError::JsonParseError(err)
     }
 }
-impl From<url::ParseError> for RequestParseError {
-    fn from(err: url::ParseError) -> RequestParseError {
+impl From<url_parser::UrlParseError> for RequestParseError {
+    fn from(err: url_parser::UrlParseError) -> RequestParseError {
         RequestParseError::UrlParseError(err)
     }
 }
@@ -137,6 +141,9 @@ fn get_body_as_json(request: &mut Request) -> Result<Json, RequestParseError> {
 }
 
 
-fn get_url(request: &Request) -> Result<Url, RequestParseError> {
-    Ok(try!(Url::parse(request.url())))
+fn get_url(request: &Request) -> Result<UrlResource, RequestParseError> {
+    Ok(try!(url_parser::parse_url_resource(request.url())))
+    //let url_string = format!("http://X.com/{}", request.url());
+    //println!("Found url: {}", url_string);
+    //Ok(try!(Url::parse(&url_string[..])))
 }

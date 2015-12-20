@@ -5,7 +5,9 @@ use router::ParsedRequest;
 use std::io::Cursor;
 use tiny_http::{Response, StatusCode, Header};
 
-use url::Url;
+//use url::Url;
+
+use url_parser::UrlResource;
 
 use rustc_serialize::json::Json;
 
@@ -30,28 +32,28 @@ pub fn handle_request(request: ParsedRequest) -> Response<Cursor<Vec<u8>>> {
 }
 
 
-fn get_handler(url: Url) -> Response<Cursor<Vec<u8>>> {
+fn get_handler(url: UrlResource) -> Response<Cursor<Vec<u8>>> {
     let message = format!("GET Url: {}", url);
     println!("{}", message);
     ok(message)
 }
 
 
-fn delete_handler(url: Url) -> Response<Cursor<Vec<u8>>> {
+fn delete_handler(url: UrlResource) -> Response<Cursor<Vec<u8>>> {
     let message = format!("DELETE Url: {}", url);
     println!("{}", message);
     ok(message)
 }
 
 
-fn post_handler(url: Url, json: Json) -> Response<Cursor<Vec<u8>>> {
+fn post_handler(url: UrlResource, json: Json) -> Response<Cursor<Vec<u8>>> {
     let message = format!("POST Url: {} Json: {}", url, json);
     println!("{}", message);
     ok(message)
 }
 
 
-fn put_handler(url: Url, json: Json) -> Response<Cursor<Vec<u8>>> {
+fn put_handler(url: UrlResource, json: Json) -> Response<Cursor<Vec<u8>>> {
     let message = format!("PUT Url: {} Json: {}", url, json);
     println!("{}", message);
     ok(message)
