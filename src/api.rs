@@ -17,19 +17,21 @@ pub fn post_table(tables: &mut Tables, table: &str) -> Response<Cursor<Vec<u8>>>
         Err(e) => handle_table_error(e),
         Ok(_) => ok(format!("Successfully Created Table: {}", table))
     }
-//    ok(format!("Creating table {}", table))
 }
 
 pub fn post_key_to_table(tables: &mut Tables, table: &str, key: &str, data: Json) -> Response<Cursor<Vec<u8>>> {
-    ok(format!("Creating key {} on table: {} with data: {:?}", key, table, data))
+    match tables.put(table, key, data) {
+        Err(e) => handle_table_error(e),
+        Ok(_) => ok(format!("Successfully added key: {} to table {}", key, table))
+    }
 }
 
-//pub fn post_table(table: &str) -> Response<Cursor<Vec<u8>>> {
-//    ok(format!("Creating table {}", table))
-//}
-
 pub fn get_key(tables: &mut Tables, table: &str, key: &str) -> Response<Cursor<Vec<u8>>> {
-    okJson(Json::from_str("{\"foo\":\"bar\"}").unwrap())
+    match tables.get(table, key) {
+        Err(e) => handle_table_error(e),
+        Ok(json) => okJson(json),
+    }
+//    okJson(Json::from_str("{\"foo\":\"bar\"}").unwrap())
 }
 
 
