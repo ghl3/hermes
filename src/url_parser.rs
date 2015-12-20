@@ -1,51 +1,60 @@
 
-
 use std::collections::HashMap;
 use std::vec::Vec;
-//use  std::error::Error;
+
 
 pub struct UrlResource<'a> {
     location: Vec<&'a str>,
     params: HashMap<String, String>
 }
 
-//#[deriving(Debug)]
+
 pub enum ParseError {
     InvalidUrl,
     InvalidQuery
 }
-/*
-impl fmt::Display for ParseError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            RequestParseError::ReadError(ref err) => err.fmt(f),
-            RequestParseError::UrlParseError(ref err) => err.fmt(f),
-            RequestParseError::JsonParseError(ref err) => err.fmt(f)
-        }
-    }
-}
-impl Error for RequestParseError {
-    fn description(&self) -> &str {
-        match *self {
-            RequestParseError::ReadError(ref err) => err.description(),
-            RequestParseError::JsonParseError(ref err) => err.description(),
-            RequestParseError::UrlParseError(ref err) => err.description()
-        }
-    }
-}
-*/
+
 
 impl<'a> UrlResource<'a> {
     fn new(location: Vec<&'a str>, params: HashMap<String, String>) -> UrlResource<'a> {
         UrlResource { location: location, params: params }
     }
-    fn from_resource(location: &'a str) -> UrlResource<'a> {
-        UrlResource::new(location.split("/").collect::<Vec<&str>>(),  HashMap::new())
+
+    fn parse_location(location: &'a str) -> Result<Vec<&'a str>, ParseError> {
+        if (location.len() == 0) {
+            Err(ParseError::InvalidUrl)
+            //        } else if (location.char_at(0) != '/') {
+        } else if (location.chars().nth(0).unwrap() != '/') {
+            Err(ParseError::InvalidUrl)
+        } else {
+            Ok(location[1..].split("/").collect())
+        }
     }
-    fn from_resource_and_query(location: &'a str, query: &str) -> UrlResource<'a> {
-        UrlResource::new(location.split("/").collect::<Vec<&str>>(), parse_query(query))
+
+    fn parse_query(query: &str) -> Result<HashMap<String, String>, ParseError> {
+        Ok(HashMap::new())
+    }
+
+    fn from_resource(location: &'a str) -> Result<UrlResource<'a>, ParseError> {
+        match UrlResource::parse_location(location) {
+            Ok(loc_vec) => Ok(UrlResource::new(loc_vec, HashMap::new())),
+            Err(e) => Err(e)
+        }
+    }
+
+    fn from_resource_and_query(location: &'a str, query: &str) -> Result<UrlResource<'a>, ParseError> {
+        match UrlResource::parse_location(location) {
+            Ok(loc_vec) => {
+                match UrlResource::parse_query(query) {
+                    Ok(query_map) => Ok(UrlResource::new(loc_vec, query_map)),
+                    Err(e) => Err(e),
+                }
+            },
+            Err(e) => Err(e),
+        }
     }
 }
+
 
 pub fn parse_url_resource(url: &str) -> Result<UrlResource, ParseError> {
 
@@ -53,21 +62,33 @@ pub fn parse_url_resource(url: &str) -> Result<UrlResource, ParseError> {
 
     match url_split.len() {
         0 => Err(ParseError::InvalidUrl),
-        1 => Ok(UrlResource::from_resource(url_split[0])), //(resource.split("/"), HashMap.new())),
-        2 => Ok(UrlResource::from_resource_and_query(url_split[0], url_split[1])),
+        1 => UrlResource::from_resource(url_split[0]),
+        2 => UrlResource::from_resource_and_query(url_split[0], url_split[1]),
         _ => Err(ParseError::InvalidUrl),
     }
-    /*
-    match resource.split("?").collect().as_slice() {
-        [resource] => Ok(UrlResource::new(resource.split("/"), HashMap.new())),
-        [resource, params] => Ok(UrlResource::new(resource.split("/"), parse_params(params))),
-        _ => Err("Foobar")
-
-    }
-*/
 }
 
 
-pub fn parse_query(query: &str) -> HashMap<String, String> {
-    HashMap::new()
+#[test]
+fn it_works() {
+    match parse_url_resource("/foo/bar") {
+        Ok(rs) => {
+            println!("location: {:?} params: {:?}", rs.location, rs.params);
+            assert!(rs.location == vec!("foo", "bar"));
+        },
+        Err(_) => assert!(false),
+    }
+}
+
+
+#[test]
+fn it_works_2() {
+    match parse_url_resource("/foo/bar?a=A&b=B") {
+        Ok(rs) => {
+            println!("location: {:?} params: {:?}", rs.location, rs.params);
+            assert!(rs.location == vec!("foo", "bar"));
+            assert!(rs.params == HashMap::new());
+        },
+        Err(_) => assert!(false),
+    }
 }
