@@ -9,6 +9,7 @@ use rustc_serialize::json::Json;
 #[derive(Debug)]
 pub enum TableError {
     TableDoesNotExist,
+    TableAlreadyExists,
     KeyAlreadyPresent,
     KeyDoesNotExist,
 }
@@ -21,6 +22,15 @@ pub struct Tables {
 impl Tables {
     pub fn new() -> Tables {
         Tables { data: HashMap::new() }
+    }
+
+    pub fn create_table(&mut self, table: &str) -> Result<(), TableError> {
+        if (self.data.contains_key(table)) {
+            Err(TableError::TableAlreadyExists)
+        } else {
+            self.data.insert(table.to_string(), HashMap::new());
+            Ok(())
+        }
     }
 
     fn get_table(&self, table: &str) -> Result<&HashMap<String, Json>, TableError> {
