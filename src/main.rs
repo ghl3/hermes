@@ -1,22 +1,21 @@
 
 #![feature(slice_patterns)]
+#[allow(unused_parens)]
 
 extern crate rustc_serialize;
 extern crate docopt;
 extern crate tiny_http;
 extern crate url;
-//extern crate collections;
 
-use std::io;
+
 use std::net::SocketAddr;
 use std::str::FromStr;
 
-use tiny_http::{Server, Request, Response};
+use tiny_http::{Server};
 use docopt::Docopt;
 
 
 mod router;
-//mod handler;
 mod url_parser;
 mod http;
 mod api;
@@ -42,16 +41,6 @@ struct Args {
 }
 
 
-/*
-pub fn parse_and_handle_request(mut request: Request) -> Result<(), io::Error> {
-    let parsed = router::parse_request(&mut request);
-    let response = handler::handle_request(parsed);
-//    let response = Response::new(parsedResponse.status, Vec::new(),
-//                                 parsedResponse.data, Some(parsedResponse.data.len()), None);
-    request.respond(response)
-}
-*/
-
 fn main() {
 
     let args: Args = Docopt::new(USAGE)
@@ -68,7 +57,7 @@ fn main() {
         // blocks until the next request is received
         match server.recv() {
             Ok(rq) => {
-                match router::handle_request_and_send_response(rq) { //parse_and_handle_request(rq) {
+                match router::handle_request_and_send_response(rq) {
                     Ok(_) => (),
                     Err(err) => println!("Error sending response: {}", err)
                 }

@@ -1,9 +1,4 @@
 
-/*
-The router's job is to take HTTP requests and parse them into
-"ParsedRequest" objects
-*/
-
 use std::fmt;
 
 use std::error::Error;
@@ -11,19 +6,13 @@ use std::fmt::Display;
 use std::io::Read;
 use std::io;
 
-use tiny_http::{Request, Method, StatusCode, Header};
-
-//use url;
-//use url::Url;
+use tiny_http::{Request, Method, StatusCode};
 
 use rustc_serialize::json;
 use rustc_serialize::json::Json;
 
 use url_parser;
 use url_parser::UrlResource;
-
-//use handler::{ok, http_response};
-
 use std::io::Cursor;
 use tiny_http::Response;
 
@@ -31,51 +20,7 @@ use api::{post_table, get_key};
 
 use http::{ok, http_response};
 
-//use http::ParsedResponse;
-
-//use http;
-
-
 /*
-pub enum ParsedRequest {
-
-    // The Good
-    GetRequest(UrlResource),
-    DeleteRequest(UrlResource),
-    PostJson(UrlResource, Json),
-    PutJson(UrlResource, Json),
-
-    // The Bad
-    UnsupportedMethod,
-    UnknownUrl(UrlResource),
-
-    // The Ugly
-    JsonParseError(RequestParseError),
-    UrlParseError(RequestParseError),
-}
-
-
-pub enum RequestParseError {
-    UnsupportedMethod,
-    UnknownUrl(UrlResource),
-    JsonParseError(RequestParseError),
-    UrlParseError(RequestParseError),
-}
-*/
-
-/*
-pub fn request_router(mut request: &mut Request) -> ParsedResponse {
-
-    let url = try!(get_url(request));
-
-    match (request.method, url.location) {
-    }
-}
- */
-
-
-/*
-
 Hermes API:
 
 Post /table
@@ -98,16 +43,13 @@ Get /table/<name>/<key>
 - Return the data for a given key
 - 400 if table doesn't exist
 - 400 if key doesn't exist
-
 */
-
 
 
 pub fn handle_request_and_send_response(mut request: Request) -> Result<(), io::Error> {
     let response = handle_request(&mut request);
     request.respond(response)
 }
-
 
 
 pub fn handle_request(mut request: &mut Request) -> Response<Cursor<Vec<u8>>> {
@@ -125,25 +67,25 @@ pub fn handle_request(mut request: &mut Request) -> Response<Cursor<Vec<u8>>> {
 
 pub fn create_response(mut request: &mut Request) -> Result<Response<Cursor<Vec<u8>>>, RequestError> {
 
-    //let method = request.method();
+    //let method = request.method().clone();
     let url = try!(get_url(request));
 
     match (request.method().clone(), &url.location[..]) {
         (Method::Post, [ref table]) => Ok(post_table(table, try!(get_body_as_json(&mut request)))),
         (Method::Get, [ref table, ref key]) => Ok(get_key(table, key)),
-        (method, location) => Err(RequestError::UnknownResource)
+        (method, location) => Err(RequestError::UnknownResource),
     }
+
+    //route_request(method, url)
 }
 
-
-
-
 /*
-pub fn route_request(method: &Method, url: UrlResource) -> Response<Cursor<Vec<u8>>> {
+pub fn route_request(method: Method, url: UrlResource) -> Result<Response<Cursor<Vec<u8>>>, RequestError> {
+
     match (method, &url.location[..]) {
-        (&Method::Post, [ref table]) => ok(format!("Creating Table: {}", table)),
-        (&Method::Get, [ref table, ref key]) => get_key(table, key)
-        _ => ok("baz"),
+        (Method::Post, [ref table]) => Ok(post_table(table, try!(get_body_as_json(&mut request)))),
+        (Method::Get, [ref table, ref key]) => Ok(get_key(table, key)),
+        (method, location) => Err(RequestError::UnknownResource)
     }
 }
 
@@ -155,7 +97,6 @@ fn test_routing() {
 }
 */
 
-
 #[test]
 fn test_vector_match() {
 
@@ -164,71 +105,10 @@ fn test_vector_match() {
     match ("fish", &v[..]) {
         (_, [])                       => assert!(false),
         (_, [elem])                   => assert!(false),
-//        [first, second, ..rest]  => println!("{:?}", rest),  // => &[3, 4, 5]
         ("fish", [x, y, z])                => assert!(true),
         _ => assert!(false),
     }
 }
-
-
-
-/*
-/// Constructs a new `ParsedRequest` object for the incoming request.
-pub fn parse_request(mut request: &mut Request) -> ParsedRequest {
-    match request.method() {
-        &Method::Get => handle_get(&request),
-        &Method::Post => handle_post(&mut request),
-        &Method::Put => handle_put(&mut request),
-        &Method::Delete => handle_delete(&request),
-        _ => ParsedRequest::UnsupportedMethod,
-    }
-}
-
-
-fn handle_get(request: &Request) -> ParsedRequest {
-    match get_url(request) {
-        Ok(url) => ParsedRequest::GetRequest(url),
-        Err(e) => ParsedRequest::UrlParseError(e),
-    }
-}
-
-
-fn handle_delete(request: &Request) -> ParsedRequest {
-    match get_url(request) {
-        Ok(url) => ParsedRequest::DeleteRequest(url),
-        Err(e) => ParsedRequest::UrlParseError(e),
-    }
-}
-
-
-fn handle_post(request: &mut Request) -> ParsedRequest {
-    match get_url(request) {
-        Ok(url) => match get_body_as_json(request) {
-            Ok(json) => ParsedRequest::PostJson(url, json),
-            Err(e) => ParsedRequest::JsonParseError(e),
-        },
-        Err(e) => ParsedRequest::UrlParseError(e)
-    }
-}
-
-
-fn handle_put(request: &mut Request) -> ParsedRequest {
-    match get_url(request) {
-        Ok(url) => match get_body_as_json(request) {
-            Ok(json) => ParsedRequest::PutJson(url, json),
-            Err(e) => ParsedRequest::JsonParseError(e),
-        },
-        Err(e) => ParsedRequest::UrlParseError(e)
-    }
-}
-*/
-
-/*
-    UnsupportedMethod,
-    UnknownUrl(UrlResource),
-    JsonParseError(RequestParseError),
-    UrlParseError(RequestParseError),
-*/
 
 
 #[derive(Debug)]
