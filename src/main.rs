@@ -11,7 +11,7 @@ use std::io;
 use std::net::SocketAddr;
 use std::str::FromStr;
 
-use tiny_http::{Server, Request};
+use tiny_http::{Server, Request, Response};
 
 use docopt::Docopt;
 
@@ -44,6 +44,8 @@ struct Args {
 pub fn parse_and_handle_request(mut request: Request) -> Result<(), io::Error> {
     let parsed = router::parse_request(&mut request);
     let response = handler::handle_request(parsed);
+//    let response = Response::new(parsedResponse.status, Vec::new(),
+//                                 parsedResponse.data, Some(parsedResponse.data.len()), None);
     request.respond(response)
 }
 

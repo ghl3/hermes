@@ -27,6 +27,10 @@ use handler::{ok, http_response};
 use std::io::Cursor;
 use tiny_http::Response;
 
+//use http::ParsedResponse;
+
+use http;
+
 pub enum ParsedRequest {
 
     // The Good
@@ -93,12 +97,8 @@ pub fn request_router(method: &Method, url: UrlResource) -> Response<Cursor<Vec<
 
 #[test]
 fn test_routing() {
-
     let response = request_router(&Method::Post, UrlResource::from_resource("/foo").unwrap());
-
-    assert!(format!("{:?}", response) == format!("{:?}", ok("foobar")));
-//    assert!(response.status_code == ok("foobar").status_code);
-//    assert!(response.reader == ok("foobar").reader);
+    assert!(http::response_string(response) == http::response_string(ok("foobar")));
 }
 
 #[test]

@@ -3,6 +3,8 @@
 use router::ParsedRequest;
 
 use std::io::Cursor;
+
+use tiny_http;
 use tiny_http::{Response, StatusCode, Header};
 
 //use url::Url;
@@ -10,6 +12,9 @@ use tiny_http::{Response, StatusCode, Header};
 use url_parser::UrlResource;
 
 use rustc_serialize::json::Json;
+
+//use http;
+//use http::ParsedResponse;
 
 // The handler takes a ParsedRequest and performs a specific
 // action on it.
@@ -64,6 +69,12 @@ pub fn ok<S>(data: S) -> Response<Cursor<Vec<u8>>> where S: Into<String> {
     http_response(StatusCode(200), data)
 }
 
+/*
+pub fn http_response<S>(status: StatusCode, data: S) -> http::ParsedResponse where S: Into<String> {
+    let data = data.into();
+    http::ParsedResponse::new(status, data)
+}
+*/
 
 pub fn http_response<S>(status: StatusCode, data: S) -> Response<Cursor<Vec<u8>>> where S: Into<String> {
 
@@ -80,3 +91,4 @@ pub fn http_response<S>(status: StatusCode, data: S) -> Response<Cursor<Vec<u8>>
         None,
         )
 }
+
