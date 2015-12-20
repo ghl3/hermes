@@ -8,7 +8,7 @@ use std::fmt::Display;
 use std::error::Error;
 
 
-//#[derive(Display)]
+#[derive(Debug)]
 pub struct UrlResource {
     pub location: Vec<String>,
     pub params: HashMap<String, String>

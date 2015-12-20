@@ -11,7 +11,7 @@ use std::fmt::Display;
 use std::io::Read;
 use std::io;
 
-use tiny_http::{Request, Method};
+use tiny_http::{Request, Method, StatusCode, Header};
 
 //use url;
 //use url::Url;
@@ -22,15 +22,21 @@ use rustc_serialize::json::Json;
 use url_parser;
 use url_parser::UrlResource;
 
-use handler::{ok, http_response};
+//use handler::{ok, http_response};
 
 use std::io::Cursor;
 use tiny_http::Response;
 
+use api::{post_table, get_key};
+
+use http::{ok, http_response};
+
 //use http::ParsedResponse;
 
-use http;
+//use http;
 
+
+/*
 pub enum ParsedRequest {
 
     // The Good
@@ -48,6 +54,14 @@ pub enum ParsedRequest {
     UrlParseError(RequestParseError),
 }
 
+
+pub enum RequestParseError {
+    UnsupportedMethod,
+    UnknownUrl(UrlResource),
+    JsonParseError(RequestParseError),
+    UrlParseError(RequestParseError),
+}
+*/
 
 /*
 pub fn request_router(mut request: &mut Request) -> ParsedResponse {
@@ -88,18 +102,59 @@ Get /table/<name>/<key>
 */
 
 
-pub fn request_router(method: &Method, url: UrlResource) -> Response<Cursor<Vec<u8>>> {
+
+pub fn handle_request_and_send_response(mut request: Request) -> Result<(), io::Error> {
+    let response = handle_request(&mut request);
+    request.respond(response)
+}
+
+
+
+pub fn handle_request(mut request: &mut Request) -> Response<Cursor<Vec<u8>>> {
+    match create_response(request) {
+        Err(RequestError::UnsupportedMethod) => http_response(StatusCode(405), "Method not allowed"),
+        Err(RequestError::UnknownResource) => http_response(StatusCode(404), format!("Url does not exist")),
+
+        Err(RequestError::JsonParseError(err)) => http_response(StatusCode(400), format!("Bad Json: {}", err)),
+        Err(RequestError::UrlParseError(url)) => http_response(StatusCode(400), format!("Bad Url: {}", url)),
+        Err(RequestError::ReadError(err)) => http_response(StatusCode(400), format!("Bad Read: {}", err)),
+        Ok(response) => response,
+    }
+}
+
+
+pub fn create_response(mut request: &mut Request) -> Result<Response<Cursor<Vec<u8>>>, RequestError> {
+
+    //let method = request.method();
+    let url = try!(get_url(request));
+
+    match (request.method().clone(), &url.location[..]) {
+        (Method::Post, [ref table]) => Ok(post_table(table, try!(get_body_as_json(&mut request)))),
+        (Method::Get, [ref table, ref key]) => Ok(get_key(table, key)),
+        (method, location) => Err(RequestError::UnknownResource)
+    }
+}
+
+
+
+
+/*
+pub fn route_request(method: &Method, url: UrlResource) -> Response<Cursor<Vec<u8>>> {
     match (method, &url.location[..]) {
-        (&Method::Post, [ref table]) => ok("foobar"),
+        (&Method::Post, [ref table]) => ok(format!("Creating Table: {}", table)),
+        (&Method::Get, [ref table, ref key]) => get_key(table, key)
         _ => ok("baz"),
     }
 }
+
 
 #[test]
 fn test_routing() {
     let response = request_router(&Method::Post, UrlResource::from_resource("/foo").unwrap());
     assert!(http::response_string(response) == http::response_string(ok("foobar")));
 }
+*/
+
 
 #[test]
 fn test_vector_match() {
@@ -117,7 +172,7 @@ fn test_vector_match() {
 
 
 
-
+/*
 /// Constructs a new `ParsedRequest` object for the incoming request.
 pub fn parse_request(mut request: &mut Request) -> ParsedRequest {
     match request.method() {
@@ -166,51 +221,65 @@ fn handle_put(request: &mut Request) -> ParsedRequest {
         Err(e) => ParsedRequest::UrlParseError(e)
     }
 }
+*/
+
+/*
+    UnsupportedMethod,
+    UnknownUrl(UrlResource),
+    JsonParseError(RequestParseError),
+    UrlParseError(RequestParseError),
+*/
 
 
 #[derive(Debug)]
-pub enum RequestParseError {
+pub enum RequestError {
     ReadError(io::Error),
     UrlParseError(url_parser::UrlParseError),
-    JsonParseError(json::ParserError)
+    JsonParseError(json::ParserError),
+    UnknownResource,
+    UnsupportedMethod
 }
-impl fmt::Display for RequestParseError {
+impl fmt::Display for RequestError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            RequestParseError::ReadError(ref err) => err.fmt(f),
-            RequestParseError::UrlParseError(ref err) => err.fmt(f),
-            RequestParseError::JsonParseError(ref err) => err.fmt(f)
+            RequestError::ReadError(ref err) => err.fmt(f),
+            RequestError::UrlParseError(ref err) => err.fmt(f),
+            RequestError::JsonParseError(ref err) => err.fmt(f),
+            RequestError::UnknownResource => write!(f, "Unknown Url"), //err.fmt(f),
+            RequestError::UnsupportedMethod => write!(f, "UnsupportedMethod"),
         }
     }
 }
-impl Error for RequestParseError {
+impl Error for RequestError {
     fn description(&self) -> &str {
         match *self {
-            RequestParseError::ReadError(ref err) => err.description(),
-            RequestParseError::JsonParseError(ref err) => err.description(),
-            RequestParseError::UrlParseError(ref err) => err.description()
+            RequestError::ReadError(ref err) => err.description(),
+            RequestError::JsonParseError(ref err) => err.description(),
+            RequestError::UrlParseError(ref err) => err.description(),
+            RequestError::UnknownResource => "Unknown url",
+            RequestError::UnsupportedMethod => "Unsupported Method",
         }
     }
 }
-impl From<io::Error> for RequestParseError {
-    fn from(err: io::Error) -> RequestParseError {
-        RequestParseError::ReadError(err)
+impl From<io::Error> for RequestError {
+    fn from(err: io::Error) -> RequestError {
+        RequestError::ReadError(err)
     }
 }
-impl From<json::ParserError> for RequestParseError {
-    fn from(err: json::ParserError) -> RequestParseError {
-        RequestParseError::JsonParseError(err)
+impl From<json::ParserError> for RequestError {
+    fn from(err: json::ParserError) -> RequestError {
+        RequestError::JsonParseError(err)
     }
 }
-impl From<url_parser::UrlParseError> for RequestParseError {
-    fn from(err: url_parser::UrlParseError) -> RequestParseError {
-        RequestParseError::UrlParseError(err)
+impl From<url_parser::UrlParseError> for RequestError {
+    fn from(err: url_parser::UrlParseError) -> RequestError {
+        RequestError::UrlParseError(err)
     }
 }
 
 
 /// Attempts to construct a Constructs a new `Rc<T>`.
-fn get_body_as_json(request: &mut Request) -> Result<Json, RequestParseError> {
+fn get_body_as_json(request: &mut Request) -> Result<Json, RequestError> {
     let mut content = String::new();
     try!(request.as_reader().read_to_string(&mut content));
     let json: Json = try!(Json::from_str(&content));
@@ -218,9 +287,7 @@ fn get_body_as_json(request: &mut Request) -> Result<Json, RequestParseError> {
 }
 
 
-fn get_url(request: &Request) -> Result<UrlResource, RequestParseError> {
+fn get_url(request: &Request) -> Result<UrlResource, RequestError> {
     Ok(try!(url_parser::parse_url_resource(request.url())))
-    //let url_string = format!("http://X.com/{}", request.url());
-    //println!("Found url: {}", url_string);
-    //Ok(try!(Url::parse(&url_string[..])))
 }
+

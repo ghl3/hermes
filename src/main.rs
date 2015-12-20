@@ -12,13 +12,14 @@ use std::net::SocketAddr;
 use std::str::FromStr;
 
 use tiny_http::{Server, Request, Response};
-
 use docopt::Docopt;
 
+
 mod router;
-mod handler;
+//mod handler;
 mod url_parser;
 mod http;
+mod api;
 
 const USAGE: &'static str = "
 Naval Fate.
@@ -41,6 +42,7 @@ struct Args {
 }
 
 
+/*
 pub fn parse_and_handle_request(mut request: Request) -> Result<(), io::Error> {
     let parsed = router::parse_request(&mut request);
     let response = handler::handle_request(parsed);
@@ -48,7 +50,7 @@ pub fn parse_and_handle_request(mut request: Request) -> Result<(), io::Error> {
 //                                 parsedResponse.data, Some(parsedResponse.data.len()), None);
     request.respond(response)
 }
-
+*/
 
 fn main() {
 
@@ -66,7 +68,7 @@ fn main() {
         // blocks until the next request is received
         match server.recv() {
             Ok(rq) => {
-                match parse_and_handle_request(rq) {
+                match router::handle_request_and_send_response(rq) { //parse_and_handle_request(rq) {
                     Ok(_) => (),
                     Err(err) => println!("Error sending response: {}", err)
                 }
