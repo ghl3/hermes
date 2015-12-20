@@ -16,9 +16,28 @@ use url_parser::UrlResource;
 use std::io::Cursor;
 use tiny_http::Response;
 
-use api::{post_table, get_key};
+use api;
 
 use http::{ok, http_response};
+
+pub fn handle_request_and_send_response(mut request: Request) -> Result<(), io::Error> {
+    let response = handle_request(&mut request);
+    request.respond(response)
+}
+
+
+pub fn handle_request(mut request: &mut Request) -> Response<Cursor<Vec<u8>>> {
+    match create_response(request) {
+        Err(RequestError::UnsupportedMethod) => http_response(StatusCode(405), "Method not allowed"),
+        Err(RequestError::UnknownResource) => http_response(StatusCode(404), format!("Url does not exist")),
+        Err(RequestError::JsonParseError(err)) => http_response(StatusCode(400), format!("Bad Json: {}", err)),
+        Err(RequestError::UrlParseError(url)) => http_response(StatusCode(400), format!("Bad Url: {}", url)),
+        Err(RequestError::ReadError(err)) => http_response(StatusCode(400), format!("Bad Read: {}", err)),
+        Ok(response) => response,
+    }
+}
+
+
 
 /*
 Hermes API:
@@ -46,37 +65,21 @@ Get /table/<name>/<key>
 */
 
 
-pub fn handle_request_and_send_response(mut request: Request) -> Result<(), io::Error> {
-    let response = handle_request(&mut request);
-    request.respond(response)
-}
-
-
-pub fn handle_request(mut request: &mut Request) -> Response<Cursor<Vec<u8>>> {
-    match create_response(request) {
-        Err(RequestError::UnsupportedMethod) => http_response(StatusCode(405), "Method not allowed"),
-        Err(RequestError::UnknownResource) => http_response(StatusCode(404), format!("Url does not exist")),
-
-        Err(RequestError::JsonParseError(err)) => http_response(StatusCode(400), format!("Bad Json: {}", err)),
-        Err(RequestError::UrlParseError(url)) => http_response(StatusCode(400), format!("Bad Url: {}", url)),
-        Err(RequestError::ReadError(err)) => http_response(StatusCode(400), format!("Bad Read: {}", err)),
-        Ok(response) => response,
-    }
-}
-
-
 pub fn create_response(mut request: &mut Request) -> Result<Response<Cursor<Vec<u8>>>, RequestError> {
 
-    //let method = request.method().clone();
     let url = try!(get_url(request));
 
     match (request.method().clone(), &url.location[..]) {
-        (Method::Post, [ref table]) => Ok(post_table(table, try!(get_body_as_json(&mut request)))),
-        (Method::Get, [ref table, ref key]) => Ok(get_key(table, key)),
-        (method, location) => Err(RequestError::UnknownResource),
-    }
 
-    //route_request(method, url)
+        (Method::Post, [ref table]) => Ok(api::post_table(table)),
+
+        (Method::Get, [ref table, ref key]) => Ok(api::get_key(table, key)),
+
+        (Method::Post, [ref table, ref key]) => Ok(api::post_key_to_table(table, key, try!(get_body_as_json(&mut request)))),
+
+        (method, location) => Err(RequestError::UnknownResource),
+
+    }
 }
 
 /*
