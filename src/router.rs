@@ -17,17 +17,18 @@ use std::io::Cursor;
 use tiny_http::Response;
 
 use api;
+use context::Context;
 
 use http::{ok, http_response};
 
-pub fn handle_request_and_send_response(mut request: Request) -> Result<(), io::Error> {
-    let response = handle_request(&mut request);
+pub fn handle_request_and_send_response(context: &mut Context, mut request: Request) -> Result<(), io::Error> {
+    let response = handle_request(context, &mut request);
     request.respond(response)
 }
 
 
-pub fn handle_request(mut request: &mut Request) -> Response<Cursor<Vec<u8>>> {
-    match create_response(request) {
+pub fn handle_request(context: &mut Context, mut request: &mut Request) -> Response<Cursor<Vec<u8>>> {
+    match create_response(context, request) {
         Err(RequestError::UnsupportedMethod) => http_response(StatusCode(405), "Method not allowed"),
         Err(RequestError::UnknownResource) => http_response(StatusCode(404), format!("Url does not exist")),
         Err(RequestError::JsonParseError(err)) => http_response(StatusCode(400), format!("Bad Json: {}", err)),
@@ -36,7 +37,6 @@ pub fn handle_request(mut request: &mut Request) -> Response<Cursor<Vec<u8>>> {
         Ok(response) => response,
     }
 }
-
 
 
 /*
@@ -65,17 +65,20 @@ Get /table/<name>/<key>
 */
 
 
-pub fn create_response(mut request: &mut Request) -> Result<Response<Cursor<Vec<u8>>>, RequestError> {
+pub fn create_response(context: &mut Context, mut request: &mut Request) -> Result<Response<Cursor<Vec<u8>>>, RequestError> {
 
     let url = try!(get_url(request));
 
     match (request.method().clone(), &url.location[..]) {
 
-        (Method::Post, [ref table]) => Ok(api::post_table(table)),
+        (Method::Post, [ref table]) => Ok(api::post_table(&mut context.tables, table)),
 
-        (Method::Get, [ref table, ref key]) => Ok(api::get_key(table, key)),
+        (Method::Get, [ref table, ref key]) => Ok(api::get_key(&mut context.tables, table, key)),
 
-        (Method::Post, [ref table, ref key]) => Ok(api::post_key_to_table(table, key, try!(get_body_as_json(&mut request)))),
+        (Method::Post, [ref table, ref key]) => {
+            let json = try!(get_body_as_json(&mut request));
+            Ok(api::post_key_to_table(&mut context.tables, table, key, json))
+        },
 
         (method, location) => Err(RequestError::UnknownResource),
 

@@ -6,22 +6,10 @@
 //#![feature(phase)]
 //#[allow(unused_parens)]
 
-
-
 extern crate rustc_serialize;
 extern crate docopt;
 extern crate tiny_http;
 extern crate url;
-
-
-//extern crate json_macros;
-
-
-use std::net::SocketAddr;
-use std::str::FromStr;
-
-use tiny_http::{Server};
-use docopt::Docopt;
 
 
 mod router;
@@ -29,6 +17,18 @@ mod url_parser;
 mod http;
 mod api;
 mod table;
+mod context;
+
+
+
+//extern crate json_macros;
+
+use std::net::SocketAddr;
+use std::str::FromStr;
+
+use tiny_http::{Server};
+use docopt::Docopt;
+
 
 const USAGE: &'static str = "
 Naval Fate.
@@ -51,6 +51,8 @@ struct Args {
 }
 
 
+
+
 fn main() {
 
     let args: Args = Docopt::new(USAGE)
@@ -63,13 +65,15 @@ fn main() {
 
     let server = Server::http(addr).unwrap();
 
-    let tables = table::Tables::new();
-    
+    let mut tables = table::Tables::new();
+
+    let mut context = context::Context::new(tables);
+
     loop {
         // blocks until the next request is received
         match server.recv() {
             Ok(rq) => {
-                match router::handle_request_and_send_response(rq) {
+                match router::handle_request_and_send_response(&mut context, rq) {
                     Ok(_) => (),
                     Err(err) => println!("Error sending response: {}", err)
                 }
