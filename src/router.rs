@@ -22,6 +22,10 @@ use rustc_serialize::json::Json;
 use url_parser;
 use url_parser::UrlResource;
 
+use handler::{ok, http_response};
+
+use std::io::Cursor;
+use tiny_http::Response;
 
 pub enum ParsedRequest {
 
@@ -39,6 +43,79 @@ pub enum ParsedRequest {
     JsonParseError(RequestParseError),
     UrlParseError(RequestParseError),
 }
+
+
+/*
+pub fn request_router(mut request: &mut Request) -> ParsedResponse {
+
+    let url = try!(get_url(request));
+
+    match (request.method, url.location) {
+    }
+}
+ */
+
+
+/*
+
+Hermes API:
+
+Post /table
+{name: name, ...}
+- Create a table with name <name>
+
+Post /table/<name>/key
+{data}
+- Create a key in table with name <name> with value <data>
+- 400 if table doesn't exist
+- 400 if key already exists
+
+PUt /table/<name>/key
+{data}
+- Update a key in table with name <name> with value <data>
+- 400 if table doesn't exist
+- 400 if key doesn't exist
+
+Get /table/<name>/<key>
+- Return the data for a given key
+- 400 if table doesn't exist
+- 400 if key doesn't exist
+
+*/
+
+
+pub fn request_router(method: &Method, url: UrlResource) -> Response<Cursor<Vec<u8>>> {
+    match (method, &url.location[..]) {
+        (&Method::Post, [ref table]) => ok("foobar"),
+        _ => ok("baz"),
+    }
+}
+
+#[test]
+fn test_routing() {
+
+    let response = request_router(&Method::Post, UrlResource::from_resource("/foo").unwrap());
+
+    assert!(format!("{:?}", response) == format!("{:?}", ok("foobar")));
+//    assert!(response.status_code == ok("foobar").status_code);
+//    assert!(response.reader == ok("foobar").reader);
+}
+
+#[test]
+fn test_vector_match() {
+
+    let v = vec!("foo", "bar", "baz");
+
+    match ("fish", &v[..]) {
+        (_, [])                       => assert!(false),
+        (_, [elem])                   => assert!(false),
+//        [first, second, ..rest]  => println!("{:?}", rest),  // => &[3, 4, 5]
+        ("fish", [x, y, z])                => assert!(true),
+        _ => assert!(false),
+    }
+}
+
+
 
 
 /// Constructs a new `ParsedRequest` object for the incoming request.

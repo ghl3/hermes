@@ -10,8 +10,8 @@ use std::error::Error;
 
 //#[derive(Display)]
 pub struct UrlResource {
-    location: Vec<String>,
-    params: HashMap<String, String>
+    pub location: Vec<String>,
+    pub params: HashMap<String, String>
 }
 impl fmt::Display for UrlResource {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -80,14 +80,14 @@ impl UrlResource {
         }
     }
 
-    fn from_resource(location: &str) -> Result<UrlResource, UrlParseError> {
+    pub fn from_resource(location: &str) -> Result<UrlResource, UrlParseError> {
         match UrlResource::parse_location(location) {
             Ok(loc_vec) => Ok(UrlResource::new(loc_vec, HashMap::new())),
             Err(e) => Err(e)
         }
     }
 
-    fn from_resource_and_query(location: &str, query: &str) -> Result<UrlResource, UrlParseError> {
+    pub fn from_resource_and_query(location: &str, query: &str) -> Result<UrlResource, UrlParseError> {
         match UrlResource::parse_location(location) {
             Ok(loc_vec) => {
                 match UrlResource::parse_query(query) {

@@ -60,12 +60,12 @@ fn put_handler(url: UrlResource, json: Json) -> Response<Cursor<Vec<u8>>> {
 }
 
 
-fn ok<S>(data: S) -> Response<Cursor<Vec<u8>>> where S: Into<String> {
+pub fn ok<S>(data: S) -> Response<Cursor<Vec<u8>>> where S: Into<String> {
     http_response(StatusCode(200), data)
 }
 
 
-fn http_response<S>(status: StatusCode, data: S) -> Response<Cursor<Vec<u8>>> where S: Into<String> {
+pub fn http_response<S>(status: StatusCode, data: S) -> Response<Cursor<Vec<u8>>> where S: Into<String> {
 
     let data = data.into();
     let data_len = data.len();

@@ -1,4 +1,6 @@
 
+#![feature(slice_patterns)]
+
 extern crate rustc_serialize;
 extern crate docopt;
 extern crate tiny_http;
@@ -16,6 +18,7 @@ use docopt::Docopt;
 mod router;
 mod handler;
 mod url_parser;
+mod http;
 
 const USAGE: &'static str = "
 Naval Fate.
