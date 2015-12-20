@@ -31,7 +31,20 @@ pub fn get_key(tables: &mut Tables, table: &str, key: &str) -> Response<Cursor<V
         Err(e) => handle_table_error(e),
         Ok(json) => okJson(json),
     }
-//    okJson(Json::from_str("{\"foo\":\"bar\"}").unwrap())
+}
+
+pub fn delete_key_from_table(tables: &mut Tables, table: &str, key: &str) -> Response<Cursor<Vec<u8>>> {
+    match tables.delete_key(table, key) {
+        Err(e) => handle_table_error(e),
+        Ok(_) => ok(format!("Successfully deleted key: {} from table: {}", key, table)),
+    }
+}
+
+pub fn delete_table(tables: &mut Tables, table: &str) -> Response<Cursor<Vec<u8>>> {
+    match tables.delete_table(table) {
+        Err(e) => handle_table_error(e),
+        Ok(_) => ok(format!("Successfully deleted table: {}", table)),
+    }
 }
 
 

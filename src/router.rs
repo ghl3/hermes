@@ -21,6 +21,7 @@ use context::Context;
 
 use http::{ok, http_response};
 
+
 pub fn handle_request_and_send_response(context: &mut Context, mut request: Request) -> Result<(), io::Error> {
     let response = handle_request(context, &mut request);
     request.respond(response)
@@ -80,28 +81,21 @@ pub fn create_response(context: &mut Context, mut request: &mut Request) -> Resu
             Ok(api::post_key_to_table(&mut context.tables, table, key, json))
         },
 
+        (Method::Delete, [ref table]) => Ok(api::delete_table(&mut context.tables, table)),
+
+        (Method::Delete, [ref table, ref key]) => Ok(api::delete_key_from_table(&mut context.tables, table, key)),
+
         (method, location) => Err(RequestError::UnknownResource),
 
     }
 }
-
-/*
-pub fn route_request(method: Method, url: UrlResource) -> Result<Response<Cursor<Vec<u8>>>, RequestError> {
-
-    match (method, &url.location[..]) {
-        (Method::Post, [ref table]) => Ok(post_table(table, try!(get_body_as_json(&mut request)))),
-        (Method::Get, [ref table, ref key]) => Ok(get_key(table, key)),
-        (method, location) => Err(RequestError::UnknownResource)
-    }
-}
-
 
 #[test]
 fn test_routing() {
     let response = request_router(&Method::Post, UrlResource::from_resource("/foo").unwrap());
     assert!(http::response_string(response) == http::response_string(ok("foobar")));
 }
-*/
+
 
 #[test]
 fn test_vector_match() {

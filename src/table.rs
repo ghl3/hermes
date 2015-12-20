@@ -1,10 +1,6 @@
 
-
-
 use std::collections::HashMap;
 use rustc_serialize::json::Json;
-
-
 
 #[derive(Debug)]
 pub enum TableError {
@@ -68,14 +64,21 @@ impl Tables {
             None => Err(TableError::KeyDoesNotExist),
         }
     }
+
+    pub fn delete_key(&mut self, table: &str, key: &str) -> Result<(), TableError> {
+
+        let table = try!(self.get_mut_table(table));
+
+        match table.remove(key) {
+            Some(_) => Ok(()),
+            None => Err(TableError::KeyDoesNotExist),
+        }
+    }
+
+    pub fn delete_table(&mut self, table: &str) -> Result<(), TableError> {
+        match self.data.remove(table) {
+            Some(_) => Ok(()),
+            None => Err(TableError::TableDoesNotExist),
+        }
+    }
 }
-
-
-
-// static mut _tables:  = HashMap::new();
-
-
-//fn initialize_tables() -> Tables {
-//    HashMap::new()
-//}
-
